@@ -1,41 +1,11 @@
 <?php
-/*
-namespace App\Http\Controllers\Api;
-
-use App\Http\Controllers\Controller;
-use App\Models\Journal;
-use Illuminate\Http\Request;
-
-class JournalAdminController extends Controller
-{
-    public function index() {
-        return Journal::with('owner:id,name,email')->latest()->get();
-    }
-
-    // Update status
-    public function updateStatus(Request $request, Journal $journal) {
-        $data = $request->validate([
-            'status' => 'required|in:pending,selesai,ditolak,butuh_edit'
-        ]);
-        $journal->update(['status'=>$data['status']]);
-        return $journal->fresh();
-    }
-
-    // Edit OAI link (khusus admin)
-    public function updateOai(Request $request, Journal $journal) {
-        $data = $request->validate(['oai_link' => 'nullable|url']);
-        $journal->update(['oai_link' => $data['oai_link'] ?? null]);
-        return $journal->fresh();
-    }
-}
-*/
-
 
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Journal;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 /**
  * JournalAdminController menangani logika terkait jurnal untuk admin.
@@ -89,6 +59,32 @@ class JournalAdminController extends Controller
         // Kembalikan respons sukses beserta data jurnal yang diperbarui
         return response()->json($journal);
     }
-}
 
+    /**
+     * Memperbarui status jurnal spesifik (misalnya, pending, selesai, dll.).
+     * Fungsi ini hanya dapat diakses oleh admin untuk memproses pendaftaran jurnal.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  int  $id
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function updateStatus(Request $request, $id)
+    {
+        // Validasi input, memastikan status yang diberikan adalah salah satu dari nilai yang diizinkan.
+        $request->validate([
+            'status' => ['required', 'string', Rule::in(['pending', 'selesai', 'ditolak', 'butuh_edit'])],
+        ]);
+
+        // Temukan jurnal berdasarkan ID
+        $journal = Journal::findOrFail($id);
+
+        // Perbarui hanya kolom status
+        $journal->update([
+            'status' => $request->status,
+        ]);
+
+        // Kembalikan respons sukses beserta data jurnal yang diperbarui
+        return response()->json($journal);
+    }
+}
 
