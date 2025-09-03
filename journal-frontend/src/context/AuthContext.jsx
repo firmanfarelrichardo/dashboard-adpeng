@@ -1,74 +1,61 @@
-// src/context/AuthContext.jsx
-import React, { createContext, useContext, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+// journal-frontend/src/context/AuthContext.jsx
 
-const AuthContext = createContext(null);
+import { createContext, useState, useEffect, useContext } from 'react';
+import { api } from '../lib/api.js';
 
-export function useAuth() {
-  return useContext(AuthContext);
-}
+const AuthContext = createContext();
 
-function AuthProvider({ children }) {
-  const [user, setUser]   = useState(null);
-  const [token, setToken] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
+export const useAuth = () => {
+    return useContext(AuthContext);
+};
 
-  useEffect(() => {
-    try {
-      const u = localStorage.getItem("user");
-      const t = localStorage.getItem("token");
-      if (u && t) {
-        setUser(JSON.parse(u));
-        setToken(t);
-      }
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+export const AuthProvider = ({ children }) => {
+    const [user, setUser] = useState(null);
+    const [loading, setLoading] = useState(true);
 
-  const login = async (email, password) => {
-    try {
-      const res = await fetch("http://127.0.0.1:8000/api/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
+    useEffect(() => {
+        const validateSession = async () => {
+            try {
+                const response = await api.auth.getUser();
+                setUser(response.data);
+            } catch (error) {
+                setUser(null);
+            } finally {
+                setLoading(false);
+            }
+        };
+        
+        validateSession();
+    }, []);
 
-      const data = await res.json();
+    const login = async (credentials) => {
+        try {
+            await api.initialize(); // Ambil CSRF cookie
+            await api.auth.login(credentials); // Lakukan login
+            const userResponse = await api.auth.getUser(); // Ambil data user
+            setUser(userResponse.data);
+            return userResponse.data;
+        } catch (error) {
+            console.error("Proses login gagal:", error);
+            throw error;
+        }
+    };
 
-      if (!res.ok) throw new Error(data?.message || "Login gagal");
+    const logout = async () => {
+        try {
+            await api.auth.logout();
+        } catch (error) {
+            console.error("Logout di server gagal, sesi lokal tetap dihapus.", error);
+        } finally {
+            setUser(null);
+        }
+    };
+    
+    const value = { user, login, logout, loading };
 
-      setUser(data.user);
-      setToken(data.token);
-      localStorage.setItem("user", JSON.stringify(data.user));
-      localStorage.setItem("token", data.token);
-
-      // redirect berdasarkan role
-      if (data.user.role === "superadmin") navigate("/superadmin", { replace: true });
-      else if (data.user.role === "admin") navigate("/admin", { replace: true });
-      else if (data.user.role === "pengelola") navigate("/pengelola", { replace: true });
-      else navigate("/login", { replace: true });
-
-      return true;
-    } catch (e) {
-      console.error("login error:", e);
-      return false;
-    }
-  };
-
-  const logout = () => {
-    setUser(null);
-    setToken(null);
-    localStorage.removeItem("user");
-    localStorage.removeItem("token");
-    navigate("/login", { replace: true });
-  };
-
-  const value = { user, token, loading, login, logout };
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-}
-
-// Export default AuthProvider (so imports like `import AuthProvider from "...";` work)
-export default AuthProvider;
+    return (
+        <AuthContext.Provider value={value}>
+            {!loading && children}
+        </AuthContext.Provider>
+    );
+};

@@ -1,100 +1,76 @@
-// src/App.jsx
-import React from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
-import { useAuth } from "./context/AuthContext";
+// journal-frontend/src/App.jsx
 
-// Pages
-import LoginPage from "./pages/LoginPage";
+import { Routes, Route } from 'react-router-dom';
+import LoginPage from './pages/LoginPage.jsx';
+import ProtectedRoute from './components/ProtectedRoute.jsx';
 
-// Admin
-import AdminLayout from "./pages/admin/AdminLayout";
-import AdminDashboard from "./pages/admin/Dashboard";
-import ManagersPage from "./pages/admin/ManagersPage";
-import JournalsAdminPage from "./pages/admin/JournalsPage";
+// Layouts
+import SuperadminLayout from './pages/superadmin/SuperadminLayout';
+import AdminLayout from './pages/admin/AdminLayout';
+import PengelolaLayout from './pages/pengelola/PengelolaLayout';
 
-// Pengelola
-import PengelolaLayout from "./pages/pengelola/PengelolaLayout";
-import PengelolaDashboard from "./pages/pengelola/Dashboard";
-import MyJournalsPage from "./pages/pengelola/MyJournalsPage";
-import NewJournalPage from "./pages/pengelola/NewJournalPage";
-import PreviewJournalPage from "./pages/pengelola/PreviewJournalPage";
+// Superadmin Pages
+import SuperadminDashboard from './pages/superadmin/Dashboard';
+import AdminsPage from './pages/superadmin/AdminsPage'; // Halaman baru
+import SuperadminManagersPage from './pages/superadmin/ManagersPage';
+import SuperadminJournalsPage from './pages/superadmin/JournalsPage';
+import SuperadminJournalDetailPage from './pages/superadmin/JournalDetailPage'; // Halaman baru
 
-// Superadmin
-import SuperadminLayout from "./pages/superadmin/SuperadminLayout";
-import SuperadminDashboard from "./pages/superadmin/Dashboard";
-import SuperadminAdminsPage from "./pages/superadmin/AdminsPage";
-import SuperadminManagersPage from "./pages/superadmin/ManagersPage";
-import SuperadminJournalsPage from "./pages/superadmin/JournalsPage";
-import UsersPage from "./pages/superadmin/UsersPage";
+// Admin Pages
+import AdminDashboard from './pages/admin/Dashboard';
+import AdminManagersPage from './pages/admin/ManagersPage';
+import AdminJournalsPage from './pages/admin/JournalsPage';
+import AdminJournalDetailPage from './pages/admin/JournalDetailPage'; // Halaman baru
 
-// Komponen proteksi route
-const PrivateRoute = ({ children, role }) => {
-  const { user } = useAuth();
-  if (!user) return <Navigate to="/" replace />;
-  if (role && user.role !== role) return <Navigate to="/" replace />;
-  return children;
-};
+// Pengelola Pages
+import PengelolaDashboard from './pages/pengelola/Dashboard';
+import MyJournalsPage from './pages/pengelola/MyJournalsPage';
+import NewJournalPage from './pages/pengelola/NewJournalPage';
+import PreviewJournalPage from './pages/pengelola/PreviewJournalPage';
 
-export default function App() {
+function App() {
+  // PERBAIKAN: Komponen <Router> yang sebelumnya membungkus <Routes> telah dihapus.
+  // Sekarang komponen ini hanya me-return <Routes> secara langsung.
   return (
-    <Routes>
-      {/* Login default */}
-      <Route path="/" element={<LoginPage />} />
+      <Routes>
+        {/* Rute publik untuk halaman login */}
+        <Route path="/" element={<LoginPage />} />
 
-      {/* Admin routes */}
-      <Route
-        path="/admin/*"
-        element={
-          <PrivateRoute role="admin">
-            <AdminLayout />
-          </PrivateRoute>
-        }
-      >
-        <Route path="dashboard" element={<AdminDashboard />} />
-        <Route path="managers" element={<ManagersPage />} />
-        <Route path="journals" element={<JournalsAdminPage />} />
-      </Route>
+        {/* === RUTE UNTUK SUPERADMIN === */}
+        <Route 
+          path="/superadmin" 
+          element={<ProtectedRoute roles={['superadmin']}><SuperadminLayout /></ProtectedRoute>}
+        >
+          <Route path="dashboard" element={<SuperadminDashboard />} />
+          <Route path="admins" element={<AdminsPage />} />
+          <Route path="managers" element={<SuperadminManagersPage />} />
+          <Route path="journals" element={<SuperadminJournalsPage />} />
+          <Route path="journals/:id" element={<SuperadminJournalDetailPage />} />
+        </Route>
 
-      {/* Pengelola routes */}
-      <Route
-        path="/pengelola/*"
-        element={
-          <PrivateRoute role="pengelola">
-            <PengelolaLayout />
-          </PrivateRoute>
-        }
-      >
-        <Route path="dashboard" element={<PengelolaDashboard />} />
-        <Route path="my-journals" element={<MyJournalsPage />} />
-        <Route path="new-journal" element={<NewJournalPage />} />
-        <Route path="preview/:id" element={<PreviewJournalPage />} />
-      </Route>
+        {/* === RUTE UNTUK ADMIN === */}
+        <Route 
+          path="/admin" 
+          element={<ProtectedRoute roles={['admin', 'superadmin']}><AdminLayout /></ProtectedRoute>}
+        >
+          <Route path="dashboard" element={<AdminDashboard />} />
+          <Route path="managers" element={<AdminManagersPage />} />
+          <Route path="journals" element={<AdminJournalsPage />} />
+          <Route path="journals/:id" element={<AdminJournalDetailPage />} />
+        </Route>
 
-      {/* Superadmin routes */}
-      <Route
-      path="/superadmin/*"
-      element={
-        <PrivateRoute role="superadmin">
-          <SuperadminLayout />
-        </PrivateRoute>
-      }
-    >
-      <Route path="dashboard" element={<SuperadminDashboard />} />
-      <Route path="admins" element={<SuperadminAdminsPage />} />
-      <Route path="managers" element={<SuperadminManagersPage />} />
-      <Route path="journals" element={<SuperadminJournalsPage />} />
-      <Route path="users" element={<UsersPage />} />
-    </Route>
-
-      {/* 404 */}
-      <Route
-        path="*"
-        element={
-          <div style={{ padding: "2rem" }}>
-            <h1>404 - Page Not Found 😢</h1>
-          </div>
-        }
-      />
-    </Routes>
+        {/* === RUTE UNTUK PENGELOLA === */}
+        <Route 
+          path="/pengelola" 
+          element={<ProtectedRoute roles={['pengelola']}><PengelolaLayout /></ProtectedRoute>}
+        >
+          <Route path="dashboard" element={<PengelolaDashboard />} />
+          <Route path="my-journals" element={<MyJournalsPage />} />
+          <Route path="new-journal" element={<NewJournalPage />} />
+          <Route path="journals/:id/preview" element={<PreviewJournalPage />} />
+        </Route>
+      </Routes>
   );
 }
+
+export default App;

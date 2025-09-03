@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { api } from '../../lib/api';
+import { api } from '../../lib/api.js';
 
 export default function PreviewJournalPage(){
   const { id } = useParams(); const nav = useNavigate();
