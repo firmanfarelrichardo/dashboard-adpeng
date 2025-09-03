@@ -19,7 +19,7 @@ export default function LoginPage() {
     setIsSubmitting(true);
     
     try {
-      // Fungsi login sekarang mengembalikan data user jika berhasil.
+      // Panggil fungsi login dari context. Jika berhasil, akan mengembalikan data user.
       const loggedInUser = await login({ email, password });
       
       // Lakukan navigasi berdasarkan role user yang dikembalikan.
@@ -31,14 +31,21 @@ export default function LoginPage() {
           navigate('/admin/dashboard');
           break;
         case 'pengelola':
-          navigate('/pengelola/my-journals');
+          navigate('/pengelola/my-journals'); // Arahkan ke daftar jurnal
           break;
         default:
-          navigate('/'); // Fallback
+          navigate('/'); // Fallback jika role tidak dikenali
           break;
       }
     } catch (err) {
-      setError('Login gagal. Periksa kembali email dan password kamu.');
+      // Menangani error yang dilempar dari context
+      if (err.response && err.response.status === 422) {
+        // Jika error validasi (422) dari Laravel
+        setError(err.response.data.errors.email[0]);
+      } else {
+        // Untuk error lainnya (misal, server mati)
+        setError('Terjadi kesalahan. Silakan coba lagi nanti.');
+      }
       console.error(err);
     } finally {
       setIsSubmitting(false);
@@ -47,15 +54,18 @@ export default function LoginPage() {
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
-      <div className="w-full max-w-md p-8 space-y-8 bg-white rounded-lg shadow-md">
+      <div className="w-full max-w-md p-8 space-y-8 bg-white rounded-lg shadow-xl">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900">
-            Login ke Akun Kamu
+          <h2 className="text-3xl font-extrabold text-gray-900">
+            Portal Jurnal Unila
           </h2>
+          <p className="mt-2 text-sm text-gray-600">
+            Login ke akun kamu
+          </p>
         </div>
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          {error && <p className="text-sm text-center text-red-500">{error}</p>}
+          {error && <p className="text-sm text-center text-red-600 bg-red-100 p-3 rounded-md">{error}</p>}
           <div className="space-y-4 rounded-md shadow-sm">
             <div>
               <label htmlFor="email-address" className="sr-only">Alamat Email</label>
@@ -90,7 +100,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="relative flex justify-center w-full px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md group hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-indigo-400"
+              className="relative flex justify-center w-full px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md group hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-indigo-400 disabled:cursor-not-allowed"
             >
               {isSubmitting ? 'Memproses...' : 'Masuk'}
             </button>

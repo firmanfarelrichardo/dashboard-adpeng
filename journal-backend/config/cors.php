@@ -1,5 +1,3 @@
-// journal-backend/config/cors.php
-
 <?php
 
 return [
@@ -9,18 +7,18 @@ return [
     | Cross-Origin Resource Sharing (CORS) Configuration
     |--------------------------------------------------------------------------
     |
-    | Here you may configure your settings for cross-origin resource sharing
-    | or "CORS". This determines what cross-origin operations may execute
-    | in web browsers. You are free to adjust these settings as needed.
+    | Di sini kamu dapat mengonfigurasi pengaturan untuk CORS. Ini menentukan
+    | operasi lintas asal apa yang dapat dieksekusi di browser web.
     |
-    | To learn more: https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS
+    | Info lebih lanjut: https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS
     |
     */
 
-    'paths' => ['api/*', 'sanctum/csrf-cookie'],
+    'paths' => ['api/*', 'sanctum/csrf-cookie', 'login', 'logout'],
 
     'allowed_methods' => ['*'],
 
+    // Pastikan URL frontend kamu ada di sini.
     'allowed_origins' => explode(',', env('CORS_ALLOWED_ORIGINS', 'http://localhost:5173')),
 
     'allowed_origins_patterns' => [],
@@ -31,8 +29,9 @@ return [
 
     'max_age' => 0,
 
-    // PERBAIKAN UTAMA: Mengizinkan pengiriman kredensial (cookies, session)
-    // Ini sangat penting untuk autentikasi dengan Laravel Sanctum.
+    // PERBAIKAN UTAMA:
+    // Nilai ini HARUS `true` agar browser diizinkan mengirim cookie
+    // ke backend, yang merupakan kunci dari autentikasi Sanctum SPA.
     'supports_credentials' => true,
 
 ];
